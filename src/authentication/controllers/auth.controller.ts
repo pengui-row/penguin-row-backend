@@ -6,6 +6,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { GetUser } from '../decorators/get-user.decorator';
 import { User } from '../entities';
 import { ApiSecretGuard } from '../guards/api-secret.guard';
+import { CreateUserInfoDTO } from '../dto/create-userinfo.dto';
 
 @ApiTags('Auth')
 @UseGuards(ApiSecretGuard)
@@ -27,5 +28,10 @@ export class AuthController {
   @UseGuards(AuthGuard())
   checkAuthStatus(@GetUser() user: User) {
     return this.authService.checkAuthStatus(user);
+  }
+
+  @Post('userinfo')
+  createUserInfo(@Body() createUserInfo: CreateUserInfoDTO) {
+    return this.authService.createUserInfo(createUserInfo);
   }
 }
