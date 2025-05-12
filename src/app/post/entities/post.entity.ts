@@ -3,6 +3,7 @@ import {
   Column,
   Entity,
   JoinColumn,
+  ManyToMany,
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
@@ -10,6 +11,7 @@ import {
 import { Like } from './like.entity';
 import { Comment } from './comment.entity';
 import { Favorite } from './favorite.entity';
+import { Tag } from './tag.entity';
 
 @Entity('post')
 export class Post {
@@ -40,4 +42,7 @@ export class Post {
 
     @OneToMany(() => Favorite, (favorite) => favorite.post)
     favorites: Favorite[];
+
+    @ManyToMany(() => Tag, (tag) => tag.posts)
+    tags: Tag[];
 }
