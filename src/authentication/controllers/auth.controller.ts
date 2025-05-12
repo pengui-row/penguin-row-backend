@@ -31,7 +31,8 @@ export class AuthController {
   }
 
   @Post('userinfo')
-  createUserInfo(@Body() createUserInfo: CreateUserInfoDTO) {
-    return this.authService.createUserInfo(createUserInfo);
+  @UseGuards(AuthGuard())
+  createUserInfo(@Body() createUserInfo: CreateUserInfoDTO, @GetUser('id') user: string) {
+    return this.authService.createUserInfo(createUserInfo, user);
   }
 }

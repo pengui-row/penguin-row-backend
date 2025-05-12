@@ -1,8 +1,6 @@
 import { IsArray, IsOptional, IsString, IsUUID } from 'class-validator';
 
 export class CreateUserInfoDTO {
-  @IsUUID()
-  user_id: string;
 
   @IsArray()
   @IsOptional()

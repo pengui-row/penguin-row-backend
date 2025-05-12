@@ -1,7 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Post } from '../entities';
 import { Repository } from 'typeorm';
+import { CreatePostDto } from '../dto';
+import { User } from 'src/authentication/entities';
 
 @Injectable()
 export class PostService {
@@ -39,5 +41,28 @@ export class PostService {
             currentPage: page,
             pageSize: page_size,
         };
+    }
+
+    async createPost(createPostDto: CreatePostDto, user:User) {
+      try {
+        const newPost = this.postRepository.create({
+          ...createPostDto,
+          user: user,
+          userId: user.id,
+          time_stamp: createPostDto.time_stamp || new Date(),
+        });
+      return this.postRepository.save(newPost);
+
+      } catch (error) {
+       this.handleDBErrors(error);
+      }
+    }
+
+    private handleDBErrors(error: any): never {
+        if (error.code === '23505') throw new BadRequestException(error.detail);
+    
+        console.log(error);
+    
+        throw new InternalServerErrorException('Please check server logs');
     }
 }

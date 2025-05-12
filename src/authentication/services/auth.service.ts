@@ -83,14 +83,14 @@ export class AuthService {
     };
   }
 
-  async createUserInfo(createUserInfoDto: CreateUserInfoDTO): Promise<UserInfo>{
+  async createUserInfo(createUserInfoDto: CreateUserInfoDTO, user_id: string): Promise<UserInfo>{
     try {
       const user = await this.userRepository.findOne({
-        where: { id: createUserInfoDto.user_id },
+        where: { id: user_id },
       });
       if (!user) {
         throw new NotFoundException(
-          `Usuario con ID ${createUserInfoDto.user_id} no encontrado`,
+          `Usuario con ID ${user_id} no encontrado`,
         );
       }
       
