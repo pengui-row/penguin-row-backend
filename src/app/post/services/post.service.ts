@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Post } from '../entities';
+import { Post, Tag } from '../entities';
 import { Repository } from 'typeorm';
 import { CreatePostDto } from '../dto';
 import { User } from 'src/authentication/entities';
@@ -9,7 +9,9 @@ import { User } from 'src/authentication/entities';
 export class PostService {
     constructor( 
         @InjectRepository(Post)
-        private readonly postRepository: Repository<Post>
+        private readonly postRepository: Repository<Post>,
+        @InjectRepository(Tag)
+        private readonly tagRepository: Repository<Tag>,
     ) {}
     async getPosts(page: number = 1, page_size:number = 10): Promise<{ 
         data: (Post & { likesCount: number; commentsCount: number; tags: string[] })[];
@@ -58,13 +60,29 @@ export class PostService {
     async createPost(createPostDto: CreatePostDto, user:User) {
       try {
         const newPost = this.postRepository.create({
-          ...createPostDto,
+          content: createPostDto.content,
+          image_url: createPostDto.image_url,
           user: user,
           userId: user.id,
           time_stamp: createPostDto.time_stamp || new Date(),
         });
-      return this.postRepository.save(newPost);
+        const savedPost = await this.postRepository.save(newPost);
 
+      // Manejar la creación y asociación de tags
+      if (createPostDto.tags && createPostDto.tags.length > 0) {
+        const tags: Tag[] = [];
+        for (const tagName of createPostDto.tags) {
+          let tag = await this.tagRepository.findOne({ where: { name: tagName } });
+          if (!tag) {
+            tag = this.tagRepository.create({ name: tagName });
+            await this.tagRepository.save(tag);
+          }
+          tags.push(tag);
+        }
+        savedPost.tags = tags;
+        await this.postRepository.save(savedPost);
+      }
+      return savedPost;
       } catch (error) {
        this.handleDBErrors(error);
       }

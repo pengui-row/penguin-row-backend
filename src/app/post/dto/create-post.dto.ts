@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsDate, IsOptional } from 'class-validator';
+import { IsString, IsNotEmpty, IsDate, IsOptional, IsArray } from 'class-validator';
 
 export class CreatePostDto {
   @IsString()
@@ -12,4 +12,8 @@ export class CreatePostDto {
   @IsDate()
   @IsOptional()
   time_stamp?: Date;
+
+  @IsArray()
+  @IsOptional()
+  tags?: string[];
 }
