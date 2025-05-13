@@ -14,14 +14,15 @@ export class PostService {
         private readonly tagRepository: Repository<Tag>,
     ) {}
     async getPosts(page: number = 1, page_size:number = 10): Promise<{ 
-        data: (Post & { likesCount: number; commentsCount: number; tags: string[] })[];
-        total: number;
-        currentPage: number;
-        pageSize: number;
+        data: (Post & { likesCount: number; commentsCount: number; tags: string[]; user: { name: string; lastName: string } })[];
+    total: number;
+    currentPage: number;
+    pageSize: number;
      }> {
         const offset = (page - 1) * page_size;
         const [ posts, total ] = await this.postRepository.createQueryBuilder('post')
       .leftJoinAndSelect('post.user', 'user')
+      .leftJoinAndSelect('user.profile', 'profile')
       .leftJoinAndSelect('post.tags', 'tag')
       .loadRelationCountAndMap(
         'post.likesCount',
@@ -45,12 +46,16 @@ export class PostService {
         }
 
         // Transformar la respuesta para incluir los tags como un array de strings
-        const postsWithTags = posts.map(post => ({
+        const postsWithUserData = posts.map(post => ({
           ...post,
           tags: post.tags.map(tag => tag.name),
-        }));
+          user: {
+          name: post.user.profile ? post.user.profile.name : null,
+          lastName: post.user.profile ? post.user.profile.lastName : null,
+          },
+    }));
         return {
-            data: postsWithTags as (Post & { likesCount: number; commentsCount: number; tags: string[] })[],
+            data: postsWithUserData as (Post & { likesCount: number; commentsCount: number; tags: string[]; user: { name: string; lastName: string } })[],
             total,
             currentPage: page,
             pageSize: page_size,
