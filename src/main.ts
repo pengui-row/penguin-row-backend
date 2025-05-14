@@ -18,8 +18,8 @@ async function bootstrap() {
   );
 
   const config = new DocumentBuilder()
-    .setTitle('Bio stats RESTFul API')
-    .setDescription('Bio stats endpoints')
+    .setTitle('Penguin Row RESTFul API')
+    .setDescription('Penguin Row endpoints')
     .setVersion('1.0')
     .build();
 

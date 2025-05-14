@@ -2,23 +2,27 @@ import {
   BadRequestException,
   Injectable,
   InternalServerErrorException,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { DeepPartial, Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 
-import { User, Profile } from '../entities';
-import { LoginUserDto, CreateUserDto } from '../dto';
+import { User, Profile, UserInfo } from '../entities';
+import { LoginUserDto, CreateUserDto, CreateUserInfoDTO } from '../dto';
 import { JwtPayload } from '../models/jwt-payload.interface';
 import { InjectRepository } from '@nestjs/typeorm';
 
 @Injectable()
 export class AuthService {
   constructor(
+    @InjectRepository(UserInfo)
+    private readonly userInfoRepository: Repository<UserInfo>,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
     private readonly jwtService: JwtService,
+    
   ) {}
 
   // * Login Service
@@ -77,6 +81,32 @@ export class AuthService {
       ...user,
       token: this.getJwtToken({ id: user.id }),
     };
+  }
+
+  async createUserInfo(createUserInfoDto: CreateUserInfoDTO, user_id: string): Promise<UserInfo>{
+    try {
+      const user = await this.userRepository.findOne({
+        where: { id: user_id },
+      });
+      if (!user) {
+        throw new NotFoundException(
+          `Usuario con ID ${user_id} no encontrado`,
+        );
+      }
+      
+      const userInfo = this.userInfoRepository.create({
+        interests: createUserInfoDto.interests,
+        location: createUserInfoDto.location,
+        professional_title: createUserInfoDto.professional_title,
+        talents: createUserInfoDto.talents,
+        experience: createUserInfoDto.experience,
+        user: user,
+      });
+
+      return this.userInfoRepository.save(userInfo);
+    } catch (error) {
+      this.handleDBErrors(error);
+    }
   }
 
   private getJwtToken(payload: JwtPayload) {
