@@ -66,7 +66,7 @@ export class PostService {
       try {
         const newPost = this.postRepository.create({
           content: createPostDto.content,
-          image_url: createPostDto.image_url,
+          image_url: createPostDto.image_url || null,
           user: user,
           userId: user.id,
           time_stamp: createPostDto.time_stamp || new Date(),

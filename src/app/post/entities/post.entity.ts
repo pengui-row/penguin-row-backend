@@ -21,7 +21,7 @@ export class Post {
     @Column('text')
     content: string
 
-    @Column('text')
+    @Column({name: 'text', nullable:true})
     image_url: string
 
     @Column('timestamp')

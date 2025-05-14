@@ -6,8 +6,8 @@ export class CreatePostDto {
   content: string;
 
   @IsString()
-  @IsNotEmpty()
-  image_url: string;
+  @IsOptional()
+  image_url?: string;
 
   @IsDate()
   @IsOptional()
