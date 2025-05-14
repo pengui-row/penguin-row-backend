@@ -1,9 +1,10 @@
 import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Post, Tag } from '../entities';
+import { Like, Post, Tag } from '../entities';
 import { Repository } from 'typeorm';
-import { CreatePostDto } from '../dto';
+import { CreatePostDto, LikePostDto } from '../dto';
 import { User } from 'src/authentication/entities';
+import { Status } from '../enums/status.enum';
 
 @Injectable()
 export class PostService {
@@ -12,7 +13,14 @@ export class PostService {
         private readonly postRepository: Repository<Post>,
         @InjectRepository(Tag)
         private readonly tagRepository: Repository<Tag>,
+        @InjectRepository(Like)
+        private readonly likeRepository: Repository<Like>,
     ) {}
+
+    async findOne(id: string): Promise<Post | undefined> {
+      return this.postRepository.findOne({ where: { id } });
+    }
+
     async getPosts(page: number = 1, page_size:number = 10): Promise<{ 
         data: (Post & { likesCount: number; commentsCount: number; tags: string[]; user: { name: string; lastName: string } })[];
     total: number;
@@ -90,6 +98,46 @@ export class PostService {
       return savedPost;
       } catch (error) {
        this.handleDBErrors(error);
+      }
+    }
+
+    async likePost(post: Post ,likePostDto: LikePostDto, user:User) {
+      try {
+        const newLike = this.likeRepository.create({
+          post: post,
+          postId: likePostDto.id,
+          status: Status.ACTIVE,
+          user: user,
+          userId: user.id
+        });
+        return this.likeRepository.save(newLike);
+      } catch (error) {
+        this.handleDBErrors(error)
+      }
+    }
+
+    async unlikePost(post: Post, likePostDto: LikePostDto, user:User) {
+      try {
+        const updateLike = await this.likeRepository.findOne({
+      where: {
+        user: { id: user.id },
+        post: { id: likePostDto.id },
+        status: Status.ACTIVE
+      },
+      select: ['id', 'status', 'userId', 'postId'],
+      relations: {
+        user: false,
+        post: false,
+      },
+      });
+      if (!updateLike) {
+      throw new NotFoundException(`Like no encontrado para el usuario ${user.id} y el post ${post.id}`);
+      }
+
+      updateLike.status = Status.INACTIVE;
+      return this.likeRepository.save(updateLike);
+      } catch (error) {
+        this.handleDBErrors(error);
       }
     }
 
