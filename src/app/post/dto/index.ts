@@ -1,3 +1,6 @@
 export * from './get-posts.dto';
 export * from './create-post.dto';
 export * from './like-post.dto';
+export * from './create-comment.dto';
+export * from './get-comments.dto';
+export * from './search-post.dto';
