@@ -1,7 +1,7 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Put, UseGuards } from '@nestjs/common';
 import { AuthService } from '../services/auth.service';
 import { ApiTags } from '@nestjs/swagger';
-import { CreateUserDto, LoginUserDto } from '../dto';
+import { ChangePasswordDto, ChangePersonalInfoDto, ChangeProfessionalInfoDto, CreateUserDto, LoginUserDto } from '../dto';
 import { AuthGuard } from '@nestjs/passport';
 import { GetUser } from '../decorators/get-user.decorator';
 import { User } from '../entities';
@@ -34,5 +34,23 @@ export class AuthController {
   @UseGuards(AuthGuard())
   createUserInfo(@Body() createUserInfo: CreateUserInfoDTO, @GetUser('id') user: string) {
     return this.authService.createUserInfo(createUserInfo, user);
+  }
+
+  @Put('professionalinfo')
+  @UseGuards(AuthGuard())
+  changeProfessionalInfo(@GetUser() user: User, @Body() changeProfessionalInfo: ChangeProfessionalInfoDto) {
+    return this.authService.changeProfessionalInfo(user,changeProfessionalInfo);
+  }
+
+  @Put('personalinfo')
+  @UseGuards(AuthGuard())
+  changePersonalInfo(@GetUser() user: User, @Body() changePersonalInfo: ChangePersonalInfoDto) {
+    return this.authService.changePersonalInfo(user,changePersonalInfo);
+  }
+
+  @Put('password')
+  @UseGuards(AuthGuard())
+  changePassword(@GetUser() user: User, @Body() changePassword: ChangePasswordDto) {
+    return this.authService.changePasswordAuthorized(user,changePassword);
   }
 }
