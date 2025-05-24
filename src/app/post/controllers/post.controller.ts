@@ -57,6 +57,11 @@ export class PostController {
         return this.postService.getComments(post, query.page, query.page_size);
     }
 
+    @Post('comments')
+    async getPostComments(@GetPostFromId() post: string, @Query() query: GetCommentsDto) {
+        return this.postService.getComments(post, query.page, query.page_size);
+    }
+
     @Get('favorite-post')
     async getFavoritePost(@GetUser() user: User, @Query() query: GetPostsDto) {
         return this.postService.getFavoritepost(query.page, query.page_size, user);

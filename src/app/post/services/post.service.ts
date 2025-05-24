@@ -10,7 +10,7 @@ import { SearchPostDto } from '../dto/search-post.dto';
 
 @Injectable()
 export class PostService {
-    constructor( 
+    constructor(
         @InjectRepository(Post)
         private readonly postRepository: Repository<Post>,
         @InjectRepository(Tag)
@@ -27,7 +27,7 @@ export class PostService {
       return this.postRepository.findOne({ where: { id } });
     }
 
-    async getPosts(page: number = 1, page_size:number = 10, user?: User): Promise<{ 
+    async getPosts(page: number = 1, page_size:number = 10, user?: User): Promise<{
       data: (Post & { likesCount: number; commentsCount: number; tags: string[]; user: { name: string; lastName: string }; isLiked:boolean; isFavorite:boolean })[];
       total: number;
       currentPage: number;
@@ -75,7 +75,7 @@ export class PostService {
             postId: In(postIds),
             status: Status.ACTIVE,
           },
-          select: ['postId'], 
+          select: ['postId'],
         });
         userFavoritePostIds = new Set(userFavorites.map(favorite => favorite.postId));
       }
@@ -225,7 +225,7 @@ export class PostService {
             post: false,
           },
         });
-        
+
         if (!updatedFavorite) {
           throw new NotFoundException(`Favorito no encontrado para el usuario ${user.id} y el post ${post}`);
         }
@@ -252,28 +252,52 @@ export class PostService {
       }
     }
 
-    async getComments(post: string, page: number = 1, page_size: number = 10) {
+    async getComments(postId: string, page: number = 1, page_size: number = 10) {
       try {
         const offset = (page - 1) * page_size;
-        const [comments, total] = await this.commentRepository.createQueryBuilder('comment')
-        .where('comment.status = :status', { status: Status.ACTIVE })
-        .andWhere('comment.postId = :post', { post: post })
-        .orderBy('comment.createdAt', 'DESC')
-        .skip(offset)
-        .take(page_size)
-        .getManyAndCount()
+        // Usamos commentEntities para referirnos a los objetos de la base de datos
+        const [commentEntities, total] = await this.commentRepository.createQueryBuilder('comment')
+          .leftJoinAndSelect('comment.user', 'user') // Unimos con la entidad User
+          .leftJoinAndSelect('user.profile', 'profile') // Unimos User con su Profile
+          .where('comment.status = :status', { status: Status.ACTIVE })
+          .andWhere('comment.postId = :postId', { postId: postId }) // Filtramos por el ID del post
+          .orderBy('comment.createdAt', 'DESC') // Ordenamos por fecha de creación
+          .skip(offset)
+          .take(page_size)
+          .getManyAndCount();
 
-        if (!comments || comments.length === 0) {
-        throw new NotFoundException('No se encontraron comentarios.');
+        if (!commentEntities || commentEntities.length === 0) {
+          // Si no hay comentarios, devolvemos un array vacío como se espera en el frontend
+          return {
+            data: [],
+            total: 0,
+            currentPage: page,
+            pageSize: page_size,
+          };
         }
+
+        // Transformamos cada entidad de comentario al formato esperado por el frontend
+        const formattedComments = commentEntities.map(commentEntity => {
+          const userProfile = commentEntity.user?.profile;
+          const authorName = userProfile?.name || 'Usuario'; // Nombre por defecto si no hay perfil/nombre
+          const authorLastName = userProfile?.lastName || ''; // Apellido, puede ser vacío
+
+          return {
+            id: commentEntity.id,
+            text: commentEntity.content, // Asumiendo que 'content' es el texto del comentario
+            author: `${authorName} ${authorLastName}`.trim(), // Nombre completo del autor
+          };
+        });
+
         return {
-        data: comments,
-        total,
-        currentPage: page,
-        pageSize: page_size,
-      };
+          data: formattedComments,
+          total,
+          currentPage: page,
+          pageSize: page_size,
+        };
       } catch (error) {
-        this.handleDBErrors(error)
+        // El manejador de errores existente se encargará de otros problemas
+        this.handleDBErrors(error);
       }
     }
 
@@ -518,15 +542,15 @@ export class PostService {
         pageSize: page_size,
       };
       } catch (error) {
-        this.handleDBErrors(error)    
+        this.handleDBErrors(error)
       }
     }
 
     private handleDBErrors(error: any): never {
         if (error.code === '23505') throw new BadRequestException(error.detail);
-    
+
         console.log(error);
-    
+
         throw new InternalServerErrorException('Please check server logs');
     }
 }
