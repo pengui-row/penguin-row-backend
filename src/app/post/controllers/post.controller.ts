@@ -67,7 +67,7 @@ export class PostController {
         return this.postService.getUserPost(query.page, query.page_size, user);
     }
 
-    @Get('search-post')
+    @Post('search-post')
     async getSearchedPost(@GetUser() user: User, @Query() query: GetPostsDto, @Body() search: SearchPostDto) {
         return this.postService.getSearchedPost(query.page, query.page_size, search, user);
     }
