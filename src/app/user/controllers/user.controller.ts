@@ -30,4 +30,9 @@ export class UserController {
     async readNotification(@GetUser() user: User, @Body() notification: ReadNotificationDto) {
         return this.userService.readNotification(user, notification);
     }
+
+    @Get('user-info')
+    async getUserInfo(@GetUser() user: User) {
+        return this.userService.findUserInfo(user);
+    }
 }

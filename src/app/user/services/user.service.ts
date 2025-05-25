@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { User } from 'src/authentication/entities';
+import { Profile, User, UserInfo } from 'src/authentication/entities';
 import { Repository } from 'typeorm';
 import { Notification } from '../entities/notification.entity';
 import { CreateNotificationDto, ReadNotificationDto } from '../dto';
@@ -12,7 +12,11 @@ export class UserService {
         @InjectRepository(User)
         private readonly userRepository: Repository<User>,
         @InjectRepository(Notification)
-        private readonly notificationRepository: Repository<Notification>
+        private readonly notificationRepository: Repository<Notification>,
+        @InjectRepository(UserInfo)
+        private readonly userInfoRepository: Repository<UserInfo>,
+        @InjectRepository(Profile)
+        private readonly profileRepository: Repository<Profile>,
     ) {}
 
     async findOne(user: User) {
@@ -110,6 +114,29 @@ export class UserService {
         return this.notificationRepository.save(updatedNotification);
     } catch (error) {
         this.handleDBErrors(error)
+    }
+  }
+
+  async findUserInfo(user: User) {
+    if (!user || !user.id) {
+      throw new InternalServerErrorException('El usuario es requerido para modificar notificaciones.');
+    }
+    try {
+      const userInfo = this.userInfoRepository.findOne({
+        where: {
+          user: { id: user.id }
+        },
+        select: ['id','experience','interests','location','professional_title','talents','user'],
+        relations: { user: true },
+      });
+
+      if (!userInfo) {
+        throw new NotFoundException(`No se encontro la información del usuario ${user.id}`)
+      }
+      
+      return userInfo
+    } catch (error) {
+      this.handleDBErrors(error)
     }
   }
 
