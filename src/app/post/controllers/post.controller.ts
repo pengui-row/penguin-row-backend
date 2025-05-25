@@ -52,7 +52,7 @@ export class PostController {
         return this.postService.createComment(post, user, comment);
     }
 
-    @Get('comment')
+    @Post('comments')
     async getPostComment(@GetPostFromId() post: string, @Query() query: GetCommentsDto) {
         return this.postService.getComments(post, query.page, query.page_size);
     }

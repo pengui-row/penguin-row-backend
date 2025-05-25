@@ -256,6 +256,8 @@ export class PostService {
       try {
         const offset = (page - 1) * page_size;
         const [comments, total] = await this.commentRepository.createQueryBuilder('comment')
+        .leftJoinAndSelect('comment.user', 'user')
+        .leftJoinAndSelect('user.profile', 'profile')
         .where('comment.status = :status', { status: Status.ACTIVE })
         .andWhere('comment.postId = :post', { post: post })
         .orderBy('comment.createdAt', 'DESC')
@@ -266,8 +268,16 @@ export class PostService {
         if (!comments || comments.length === 0) {
         throw new NotFoundException('No se encontraron comentarios.');
         }
+
+        const commentsWithUser = comments.map((comment:any) => ({
+          ...comment,
+          user: {
+            name: comment.user.profile ? comment.user.profile.name : null,
+            lastName: comment.user.profile ? comment.user.profile.lastName : null,
+          },
+        }));
         return {
-        data: comments,
+        data: commentsWithUser,
         total,
         currentPage: page,
         pageSize: page_size,
