@@ -71,4 +71,9 @@ export class PostController {
     async getSearchedPost(@GetUser() user: User, @Query() query: GetPostsDto, @Body() search: SearchPostDto) {
         return this.postService.getSearchedPost(query.page, query.page_size, search, user);
     }
+
+    @Get('get-one')
+    async getOnePost(@Body('postId') id: string) {
+        return this.postService.findOne(id);
+    }
 }

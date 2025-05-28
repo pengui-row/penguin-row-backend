@@ -99,7 +99,7 @@ export class UserService {
     try {
         const updatedNotification = await this.notificationRepository.findOne({
             where: {
-                user: { id: user.id },
+                userToNotifyId:  user.id ,
                 id: notification.id
             },
             select: ['id','description','status','type'],
