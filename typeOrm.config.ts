@@ -3,6 +3,7 @@ import { Comment } from "src/app/post/entities/comment.entity";
 import { Favorite } from "src/app/post/entities/favorite.entity";
 import { Like } from "src/app/post/entities/like.entity";
 import { Post } from "src/app/post/entities/post.entity";
+import { Notification } from "src/app/user/entities/notification.entity";
 import { Profile } from "src/authentication/entities/profile.entity";
 import { User } from "src/authentication/entities/user.entity";
 import { UserInfo } from "src/authentication/entities/userInfo.entity";
@@ -16,5 +17,5 @@ export default new DataSource({
     password: process.env.PG_PASSWORD,
     database: process.env.PG_DATABASE,
     migrations: ['migrations/**'],
-    entities: [User,Profile,Post,Like,Comment,Favorite,UserInfo,Tag],
+    entities: [User,Profile,Post,Like,Comment,Favorite,UserInfo,Tag,Notification],
 });
