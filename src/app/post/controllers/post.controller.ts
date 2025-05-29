@@ -52,7 +52,7 @@ export class PostController {
         return this.postService.createComment(post, user, comment);
     }
 
-    @Get('comment')
+    @Post('comments')
     async getPostComment(@GetPostFromId() post: string, @Query() query: GetCommentsDto) {
         return this.postService.getComments(post, query.page, query.page_size);
     }
@@ -72,8 +72,13 @@ export class PostController {
         return this.postService.getUserPost(query.page, query.page_size, user);
     }
 
-    @Get('search-post')
+    @Post('search-post')
     async getSearchedPost(@GetUser() user: User, @Query() query: GetPostsDto, @Body() search: SearchPostDto) {
         return this.postService.getSearchedPost(query.page, query.page_size, search, user);
+    }
+
+    @Get('get-one')
+    async getOnePost(@Body('postId') id: string) {
+        return this.postService.findOne(id);
     }
 }

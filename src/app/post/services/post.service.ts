@@ -255,46 +255,34 @@ export class PostService {
     async getComments(postId: string, page: number = 1, page_size: number = 10) {
       try {
         const offset = (page - 1) * page_size;
-        // Usamos commentEntities para referirnos a los objetos de la base de datos
-        const [commentEntities, total] = await this.commentRepository.createQueryBuilder('comment')
-          .leftJoinAndSelect('comment.user', 'user') // Unimos con la entidad User
-          .leftJoinAndSelect('user.profile', 'profile') // Unimos User con su Profile
-          .where('comment.status = :status', { status: Status.ACTIVE })
-          .andWhere('comment.postId = :postId', { postId: postId }) // Filtramos por el ID del post
-          .orderBy('comment.createdAt', 'DESC') // Ordenamos por fecha de creación
-          .skip(offset)
-          .take(page_size)
-          .getManyAndCount();
 
-        if (!commentEntities || commentEntities.length === 0) {
-          // Si no hay comentarios, devolvemos un array vacío como se espera en el frontend
-          return {
-            data: [],
-            total: 0,
-            currentPage: page,
-            pageSize: page_size,
-          };
+        const [comments, total] = await this.commentRepository.createQueryBuilder('comment')
+        .leftJoinAndSelect('comment.user', 'user')
+        .leftJoinAndSelect('user.profile', 'profile')
+        .where('comment.status = :status', { status: Status.ACTIVE })
+        .andWhere('comment.postId = :post', { post: post })
+        .orderBy('comment.createdAt', 'DESC')
+        .skip(offset)
+        .take(page_size)
+        .getManyAndCount()
+
+        if (!comments || comments.length === 0) {
+          throw new NotFoundException('No se encontraron comentarios.');
         }
 
-        // Transformamos cada entidad de comentario al formato esperado por el frontend
-        const formattedComments = commentEntities.map(commentEntity => {
-          const userProfile = commentEntity.user?.profile;
-          const authorName = userProfile?.name || 'Usuario'; // Nombre por defecto si no hay perfil/nombre
-          const authorLastName = userProfile?.lastName || ''; // Apellido, puede ser vacío
-
-          return {
-            id: commentEntity.id,
-            text: commentEntity.content, // Asumiendo que 'content' es el texto del comentario
-            author: `${authorName} ${authorLastName}`.trim(), // Nombre completo del autor
-          };
-        });
-
+        const commentsWithUser = comments.map((comment:any) => ({
+          ...comment,
+          user: {
+            name: comment.user.profile ? comment.user.profile.name : null,
+            lastName: comment.user.profile ? comment.user.profile.lastName : null,
+          },
+        }));
         return {
-          data: formattedComments,
-          total,
-          currentPage: page,
-          pageSize: page_size,
-        };
+        data: commentsWithUser,
+        total,
+        currentPage: page,
+        pageSize: page_size,
+      };
       } catch (error) {
         // El manejador de errores existente se encargará de otros problemas
         this.handleDBErrors(error);

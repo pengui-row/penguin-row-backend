@@ -10,7 +10,7 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 
 import { User, Profile, UserInfo } from '../entities';
-import { LoginUserDto, CreateUserDto, CreateUserInfoDTO } from '../dto';
+import { LoginUserDto, CreateUserDto, CreateUserInfoDTO, ChangePasswordDto, ChangeProfessionalInfoDto, ChangePersonalInfoDto } from '../dto';
 import { JwtPayload } from '../models/jwt-payload.interface';
 import { InjectRepository } from '@nestjs/typeorm';
 
@@ -106,6 +106,63 @@ export class AuthService {
       return this.userInfoRepository.save(userInfo);
     } catch (error) {
       this.handleDBErrors(error);
+    }
+  }
+
+  async changePasswordAuthorized(user: User, changePassword: ChangePasswordDto) {
+    const { old_password, password } = changePassword;
+    try {
+      const updatedUser = await this.userRepository.findOne({
+        where: { id: user.id },
+        select: { password:true, id:true },
+        relations: { profile:false },
+      });
+      if (!updatedUser) throw new NotFoundException('Usuario no encontrado');
+
+      if (!bcrypt.compareSync(old_password, updatedUser.password)) {
+        throw new UnauthorizedException('Credentials are not valid');
+      }
+      updatedUser.password = bcrypt.hashSync(password, 10);
+      return this.userRepository.save(updatedUser);
+    } catch (error) {
+      this.handleDBErrors(error)
+    }
+  }
+
+  async changeProfessionalInfo(user: User, changeProfessionalInfo: ChangeProfessionalInfoDto) {
+    try {
+      const updatedProfessionalInfo = await this.userInfoRepository.findOne({
+        where: {
+          user: { id: user.id }
+        },
+        select: ['id','experience','talents','location','professional_title','user']
+      });
+      if (!updatedProfessionalInfo) throw new NotFoundException('Información profesional no encontrada');
+
+      updatedProfessionalInfo.experience = changeProfessionalInfo.experience || updatedProfessionalInfo.experience;
+      updatedProfessionalInfo.location = changeProfessionalInfo.location || updatedProfessionalInfo.location;
+      updatedProfessionalInfo.professional_title = changeProfessionalInfo.professional_title || updatedProfessionalInfo.professional_title;
+      updatedProfessionalInfo.talents = changeProfessionalInfo.talents || updatedProfessionalInfo.talents;
+      return this.userInfoRepository.save(updatedProfessionalInfo);
+    } catch (error) {
+      this.handleDBErrors(error)
+    }
+  }
+
+  async changePersonalInfo(user: User, changePersonalInfo: ChangePersonalInfoDto) {
+    try {
+      const updatedPersonalInfo = await this.userInfoRepository.findOne({
+        where: {
+          user: { id: user.id }
+        },
+        select: ['id','interests','user']
+      });
+      if (!updatedPersonalInfo) throw new NotFoundException('Información profesional no encontrada');
+
+      updatedPersonalInfo.interests = changePersonalInfo.interests || updatedPersonalInfo.interests;
+      return this.userInfoRepository.save(updatedPersonalInfo);
+    } catch (error) {
+      this.handleDBErrors(error)
     }
   }
 

@@ -12,6 +12,7 @@ import { Like } from 'src/app/post/entities/like.entity';
 import { Comment } from 'src/app/post/entities/comment.entity';
 import { Favorite } from 'src/app/post/entities/favorite.entity';
 import { UserInfo } from './userInfo.entity';
+import { Notification } from 'src/app/user/entities/notification.entity';
 
 @Entity('users')
 export class User {
@@ -48,6 +49,12 @@ export class User {
 
   @OneToOne(() => UserInfo, (userInfo) => userInfo.user, { cascade: true })
   userInfo: UserInfo;
+
+  @OneToMany(() => Notification, (notification) => notification.user)
+  createdNotifications: Notification[];
+
+  @OneToMany(() => Notification, (notification) => notification.userToNotify)
+  receivedNotifications: Notification[];
   /* 
       @BeforeInsert()
   checkFieldsBeforeInsert() {
