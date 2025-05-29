@@ -10,7 +10,7 @@ import { SearchPostDto } from '../dto/search-post.dto';
 
 @Injectable()
 export class PostService {
-    constructor( 
+    constructor(
         @InjectRepository(Post)
         private readonly postRepository: Repository<Post>,
         @InjectRepository(Tag)
@@ -27,7 +27,7 @@ export class PostService {
       return this.postRepository.findOne({ where: { id } });
     }
 
-    async getPosts(page: number = 1, page_size:number = 10, user?: User): Promise<{ 
+    async getPosts(page: number = 1, page_size:number = 10, user?: User): Promise<{
       data: (Post & { likesCount: number; commentsCount: number; tags: string[]; user: { name: string; lastName: string }; isLiked:boolean; isFavorite:boolean })[];
       total: number;
       currentPage: number;
@@ -75,7 +75,7 @@ export class PostService {
             postId: In(postIds),
             status: Status.ACTIVE,
           },
-          select: ['postId'], 
+          select: ['postId'],
         });
         userFavoritePostIds = new Set(userFavorites.map(favorite => favorite.postId));
       }
@@ -225,7 +225,7 @@ export class PostService {
             post: false,
           },
         });
-        
+
         if (!updatedFavorite) {
           throw new NotFoundException(`Favorito no encontrado para el usuario ${user.id} y el post ${post}`);
         }
@@ -252,9 +252,10 @@ export class PostService {
       }
     }
 
-    async getComments(post: string, page: number = 1, page_size: number = 10) {
+    async getComments(postId: string, page: number = 1, page_size: number = 10) {
       try {
         const offset = (page - 1) * page_size;
+
         const [comments, total] = await this.commentRepository.createQueryBuilder('comment')
         .leftJoinAndSelect('comment.user', 'user')
         .leftJoinAndSelect('user.profile', 'profile')
@@ -266,7 +267,7 @@ export class PostService {
         .getManyAndCount()
 
         if (!comments || comments.length === 0) {
-        throw new NotFoundException('No se encontraron comentarios.');
+          throw new NotFoundException('No se encontraron comentarios.');
         }
 
         const commentsWithUser = comments.map((comment:any) => ({
@@ -283,7 +284,8 @@ export class PostService {
         pageSize: page_size,
       };
       } catch (error) {
-        this.handleDBErrors(error)
+        // El manejador de errores existente se encargará de otros problemas
+        this.handleDBErrors(error);
       }
     }
 
@@ -528,15 +530,15 @@ export class PostService {
         pageSize: page_size,
       };
       } catch (error) {
-        this.handleDBErrors(error)    
+        this.handleDBErrors(error)
       }
     }
 
     private handleDBErrors(error: any): never {
         if (error.code === '23505') throw new BadRequestException(error.detail);
-    
+
         console.log(error);
-    
+
         throw new InternalServerErrorException('Please check server logs');
     }
 }
